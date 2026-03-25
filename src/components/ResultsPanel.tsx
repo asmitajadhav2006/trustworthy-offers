@@ -3,6 +3,8 @@ import { AlertTriangle, CheckCircle2, Lightbulb, XCircle } from "lucide-react";
 import TrustGauge from "./TrustGauge";
 import RiskCard from "./RiskCard";
 import PhoneAnalysisCard from "./PhoneAnalysisCard";
+import SmartResultEnhancement from "./SmartResultEnhancement";
+import TransparencyBanner from "./TransparencyBanner";
 import type { AnalysisResult } from "@/lib/analysisEngine";
 
 interface ResultsPanelProps {
@@ -27,7 +29,7 @@ const ResultsPanel = ({ result, isAnalyzing }: ResultsPanelProps) => {
           Analyzing opportunity...
         </motion.p>
         <div className="mt-4 space-y-2 text-xs text-muted-foreground/60">
-          {["Scanning message patterns", "Verifying links", "Checking contacts"].map((t, i) => (
+          {["Scanning message patterns", "Verifying links", "Checking contacts", "Running AI context analysis"].map((t, i) => (
             <motion.p
               key={t}
               initial={{ opacity: 0 }}
@@ -140,6 +142,9 @@ const ResultsPanel = ({ result, isAnalyzing }: ResultsPanelProps) => {
         <PhoneAnalysisCard result={result.phoneIntelligence} />
       )}
 
+      {/* Smart Result Enhancement */}
+      <SmartResultEnhancement result={result} />
+
       {/* Recommendations */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -159,6 +164,9 @@ const ResultsPanel = ({ result, isAnalyzing }: ResultsPanelProps) => {
           ))}
         </ul>
       </motion.div>
+
+      {/* Transparency Banner */}
+      <TransparencyBanner result={result} />
     </motion.div>
   );
 };

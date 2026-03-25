@@ -4,16 +4,15 @@ import {
   Smartphone,
   PhoneOff,
   Wifi,
-  Globe,
   Shield,
   ShieldAlert,
-  ShieldX,
   AlertTriangle,
   CheckCircle2,
   XCircle,
   Signal,
   MapPin,
   Radio,
+  HelpCircle,
 } from "lucide-react";
 import type { PhoneIntelligenceResult } from "@/lib/phoneIntelligence";
 
@@ -55,6 +54,14 @@ const PhoneAnalysisCard = ({ result }: PhoneAnalysisCardProps) => {
       label: "Fake / VoIP",
       emoji: "❌",
     },
+    unknown_risk: {
+      icon: HelpCircle,
+      color: "text-warning",
+      bg: "bg-warning/10",
+      border: "border-warning/30",
+      label: "Unknown Risk",
+      emoji: "🟡",
+    },
   };
 
   const lineTypeConfig: Record<string, { icon: React.ElementType; label: string }> = {
@@ -74,14 +81,14 @@ const PhoneAnalysisCard = ({ result }: PhoneAnalysisCardProps) => {
       ? "text-destructive"
       : result.spamScore >= 30
       ? "text-warning"
-      : "text-safe";
+      : "text-muted-foreground";
 
   const spamBarColor =
     result.spamScore >= 60
       ? "bg-destructive"
       : result.spamScore >= 30
       ? "bg-warning"
-      : "bg-safe";
+      : "bg-muted-foreground/40";
 
   return (
     <motion.div
@@ -111,7 +118,6 @@ const PhoneAnalysisCard = ({ result }: PhoneAnalysisCardProps) => {
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-2 gap-3">
-        {/* Line Type */}
         <div className="rounded-lg bg-muted/30 border border-border/50 p-3">
           <div className="flex items-center gap-2 mb-1">
             <LineIcon className="w-3.5 h-3.5 text-muted-foreground" />
@@ -119,8 +125,6 @@ const PhoneAnalysisCard = ({ result }: PhoneAnalysisCardProps) => {
           </div>
           <p className="text-sm font-semibold text-foreground">{lineLabel}</p>
         </div>
-
-        {/* Carrier */}
         <div className="rounded-lg bg-muted/30 border border-border/50 p-3">
           <div className="flex items-center gap-2 mb-1">
             <Signal className="w-3.5 h-3.5 text-muted-foreground" />
@@ -128,8 +132,6 @@ const PhoneAnalysisCard = ({ result }: PhoneAnalysisCardProps) => {
           </div>
           <p className="text-sm font-semibold text-foreground">{result.carrier}</p>
         </div>
-
-        {/* Country */}
         <div className="rounded-lg bg-muted/30 border border-border/50 p-3">
           <div className="flex items-center gap-2 mb-1">
             <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
@@ -137,8 +139,6 @@ const PhoneAnalysisCard = ({ result }: PhoneAnalysisCardProps) => {
           </div>
           <p className="text-sm font-semibold text-foreground">{result.country}</p>
         </div>
-
-        {/* Reputation */}
         <div className="rounded-lg bg-muted/30 border border-border/50 p-3">
           <div className="flex items-center gap-2 mb-1">
             <Shield className="w-3.5 h-3.5 text-muted-foreground" />
@@ -166,9 +166,13 @@ const PhoneAnalysisCard = ({ result }: PhoneAnalysisCardProps) => {
             transition={{ duration: 1, ease: "easeOut", delay: 0.6 }}
           />
         </div>
-        {result.spamReports > 0 && (
+        {result.spamReports > 0 ? (
           <p className="text-[10px] text-muted-foreground">
             {result.spamReports} community spam reports found
+          </p>
+        ) : (
+          <p className="text-[10px] text-muted-foreground/60 italic">
+            No spam reports found — safety not guaranteed
           </p>
         )}
       </div>
@@ -186,7 +190,9 @@ const PhoneAnalysisCard = ({ result }: PhoneAnalysisCardProps) => {
               className="text-xs text-muted-foreground flex items-start gap-2"
             >
               <span className={`mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                result.riskLevel === "safe" ? "bg-safe" : result.riskLevel === "warning" ? "bg-warning" : "bg-destructive"
+                result.riskLevel === "safe" ? "bg-safe" : 
+                result.riskLevel === "unknown" ? "bg-warning" :
+                result.riskLevel === "warning" ? "bg-warning" : "bg-destructive"
               }`} />
               {f}
             </motion.li>
