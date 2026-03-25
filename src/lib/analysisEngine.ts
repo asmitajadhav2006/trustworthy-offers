@@ -1,3 +1,5 @@
+import { analyzePhoneIntelligence } from "./phoneIntelligence";
+
 export interface AnalysisInput {
   message: string;
   url: string;
@@ -20,6 +22,7 @@ export interface AnalysisResult {
   risks: RiskDetail[];
   highlightedPhrases: { text: string; reason: string }[];
   recommendations: string[];
+  phoneIntelligence?: import("./phoneIntelligence").PhoneIntelligenceResult;
 }
 
 const SCAM_PHRASES: { pattern: RegExp; reason: string; weight: number }[] = [
@@ -217,11 +220,15 @@ function analyzeCompany(company: string): { score: number; findings: string[] } 
 }
 
 export function performAnalysis(input: AnalysisInput): AnalysisResult {
+  
+  
   const messageResult = analyzeMessage(input.message);
   const urlResult = analyzeUrl(input.url);
   const emailResult = analyzeEmail(input.email);
   const phoneResult = analyzePhone(input.phone);
   const companyResult = analyzeCompany(input.company);
+  
+  const phoneIntel = input.phone.trim() ? analyzePhoneIntelligence(input.phone) : undefined;
 
   const activeModules: { score: number; findings: string[]; category: string }[] = [];
 
@@ -288,5 +295,6 @@ export function performAnalysis(input: AnalysisInput): AnalysisResult {
     risks,
     highlightedPhrases: messageResult.highlights,
     recommendations,
+    phoneIntelligence: phoneIntel,
   };
 }
