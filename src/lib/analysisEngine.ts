@@ -218,11 +218,15 @@ function analyzeCompany(company: string): { score: number; findings: string[] } 
 }
 
 export function performAnalysis(input: AnalysisInput): AnalysisResult {
+  const { analyzePhoneIntelligence } = require("./phoneIntelligence") as typeof import("./phoneIntelligence");
+  
   const messageResult = analyzeMessage(input.message);
   const urlResult = analyzeUrl(input.url);
   const emailResult = analyzeEmail(input.email);
   const phoneResult = analyzePhone(input.phone);
   const companyResult = analyzeCompany(input.company);
+  
+  const phoneIntel = input.phone.trim() ? analyzePhoneIntelligence(input.phone) : undefined;
 
   const activeModules: { score: number; findings: string[]; category: string }[] = [];
 
