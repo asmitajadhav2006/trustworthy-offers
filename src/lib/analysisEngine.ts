@@ -228,7 +228,7 @@ export function performAnalysis(input: AnalysisInput): AnalysisResult {
   const phoneResult = analyzePhone(input.phone);
   const companyResult = analyzeCompany(input.company);
   
-  const phoneIntel = input.phone.trim() ? analyzePhoneIntelligence(input.phone) : undefined;
+  const phoneIntel = input.phone.trim() ? analyzePhoneIntelligence(input.phone, input.message) : undefined;
 
   const activeModules: { score: number; findings: string[]; category: string }[] = [];
 

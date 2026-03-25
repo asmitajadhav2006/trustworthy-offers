@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Search, MessageSquare, Link, Phone, Mail, Building2, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,10 @@ import type { AnalysisInput } from "@/lib/analysisEngine";
 interface InputPanelProps {
   onAnalyze: (input: AnalysisInput) => void;
   isAnalyzing: boolean;
+  initialInput?: AnalysisInput | null;
 }
 
-const InputPanel = ({ onAnalyze, isAnalyzing }: InputPanelProps) => {
+const InputPanel = ({ onAnalyze, isAnalyzing, initialInput }: InputPanelProps) => {
   const [input, setInput] = useState<AnalysisInput>({
     message: "",
     url: "",
@@ -19,6 +20,12 @@ const InputPanel = ({ onAnalyze, isAnalyzing }: InputPanelProps) => {
     email: "",
     company: "",
   });
+
+  useEffect(() => {
+    if (initialInput) {
+      setInput(initialInput);
+    }
+  }, [initialInput]);
 
   const handleSubmit = () => {
     onAnalyze(input);

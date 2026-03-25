@@ -1,4 +1,5 @@
 // Advanced phone number intelligence engine with VoIP detection, carrier lookup, spam scoring, and country identification
+// CRITICAL: Never marks numbers as safe by default. Unknown data = "Unknown Risk"
 
 export interface PhoneIntelligenceResult {
   valid: boolean;
@@ -8,14 +9,15 @@ export interface PhoneIntelligenceResult {
   country: string;
   countryCode: string;
   spamScore: number;
-  riskLevel: "safe" | "warning" | "danger";
+  riskLevel: "safe" | "warning" | "danger" | "unknown";
   isFake: boolean;
   isDisposable: boolean;
-  status: "genuine" | "spam" | "suspicious" | "fake";
+  status: "genuine" | "spam" | "suspicious" | "fake" | "unknown_risk";
   reputationScore: number;
   spamReports: number;
   findings: string[];
   recommendation: string;
+  transparencyNotes: string[];
 }
 
 // Country code to country name + typical carrier mapping
@@ -49,29 +51,28 @@ const COUNTRY_CODES: Record<string, { country: string; code: string; carriers: s
 
 // Known VoIP/virtual number prefixes and patterns
 const VOIP_PATTERNS: RegExp[] = [
-  /^1(800|888|877|866|855|844|833)/, // US toll-free (often VoIP)
-  /^1(900|976)/, // US premium rate
-  /^44(70|76)/, // UK personal/VoIP numbers
-  /^91(17|18)\d{8}$/, // Indian VoIP ranges
-  /^1(206|213|310|323|415|424|628|650)55\d{4}$/, // Suspicious US patterns
+  /^1(800|888|877|866|855|844|833)/,
+  /^1(900|976)/,
+  /^44(70|76)/,
+  /^91(17|18)\d{8}$/,
+  /^1(206|213|310|323|415|424|628|650)55\d{4}$/,
 ];
 
 // Disposable/temporary number patterns
 const DISPOSABLE_INDICATORS: RegExp[] = [
-  /^1(900|976|809|284)/, // Premium/suspicious
-  /^44(70)\d{8}$/, // UK personal numbers (often used for temp services)
-  /^1(473|649|664|721|758|767|784|868|869)/, // Caribbean premium numbers
+  /^1(900|976|809|284)/,
+  /^44(70)\d{8}$/,
+  /^1(473|649|664|721|758|767|784|868|869)/,
 ];
 
 // Known spam number patterns (simulated database)
 const SPAM_PREFIXES = [
   "1900", "1976", "1809", "44700", "44709", "91171", "91181",
-  "234803", "234805", "234809", // Nigerian spam patterns
-  "23280", "23281", // Sierra Leone scam numbers
+  "234803", "234805", "234809",
+  "23280", "23281",
 ];
 
 function extractCountryInfo(digits: string): { countryCode: string; country: string; carriers: string[]; nationalNumber: string } {
-  // Try longest match first (3 digits, then 2, then 1)
   for (const len of [3, 2, 1]) {
     const prefix = digits.substring(0, len);
     if (COUNTRY_CODES[prefix]) {
@@ -87,86 +88,78 @@ function extractCountryInfo(digits: string): { countryCode: string; country: str
 }
 
 function detectLineType(digits: string): "mobile" | "voip" | "landline" | "toll_free" | "premium" | "unknown" {
-  // Toll-free detection
   if (/^1(800|888|877|866|855|844|833)/.test(digits)) return "toll_free";
   if (/^44(800|808|500)/.test(digits)) return "toll_free";
   if (/^91(1800)/.test(digits)) return "toll_free";
-
-  // Premium rate
   if (/^1(900|976)/.test(digits)) return "premium";
   if (/^44(9[0-9]{2})/.test(digits)) return "premium";
-
-  // VoIP detection
   for (const pattern of VOIP_PATTERNS) {
     if (pattern.test(digits)) return "voip";
   }
-
-  // Landline heuristics (country-specific)
-  if (/^1[2-9]\d{2}[2-9]\d{6}$/.test(digits)) return "mobile"; // US mobile
-  if (/^44(1|2)\d{9}$/.test(digits)) return "landline"; // UK landline
-  if (/^44(7)\d{9}$/.test(digits)) return "mobile"; // UK mobile
-  if (/^91[6-9]\d{9}$/.test(digits)) return "mobile"; // Indian mobile
-  if (/^91[1-5]\d{9}$/.test(digits)) return "landline"; // Indian landline
-
-  // Default to mobile for most patterns
+  if (/^1[2-9]\d{2}[2-9]\d{6}$/.test(digits)) return "mobile";
+  if (/^44(1|2)\d{9}$/.test(digits)) return "landline";
+  if (/^44(7)\d{9}$/.test(digits)) return "mobile";
+  if (/^91[6-9]\d{9}$/.test(digits)) return "mobile";
+  if (/^91[1-5]\d{9}$/.test(digits)) return "landline";
   if (digits.length >= 10 && digits.length <= 13) return "mobile";
   return "unknown";
 }
 
-function calculateSpamScore(digits: string, lineType: string): { score: number; reports: number } {
+function calculateSpamScore(digits: string, lineType: string): { score: number; reports: number; hasData: boolean } {
   let score = 0;
   let reports = 0;
+  let hasData = false;
 
-  // Check against spam prefixes
   for (const prefix of SPAM_PREFIXES) {
     if (digits.startsWith(prefix)) {
       score += 40;
       reports += Math.floor(Math.random() * 200) + 50;
+      hasData = true;
       break;
     }
   }
 
-  // VoIP numbers are inherently more suspicious
   if (lineType === "voip") {
     score += 25;
     reports += Math.floor(Math.random() * 30) + 5;
+    hasData = true;
   }
 
-  // Premium rate numbers
   if (lineType === "premium") {
     score += 35;
     reports += Math.floor(Math.random() * 100) + 20;
+    hasData = true;
   }
 
-  // Disposable number detection
   for (const pattern of DISPOSABLE_INDICATORS) {
     if (pattern.test(digits)) {
       score += 20;
       reports += Math.floor(Math.random() * 50) + 10;
+      hasData = true;
       break;
     }
   }
 
-  // All same digits
   if (/^(\d)\1+$/.test(digits)) {
     score += 30;
+    hasData = true;
   }
 
-  // Sequential digits
   if (/1234567|2345678|3456789|9876543/.test(digits)) {
     score += 15;
+    hasData = true;
   }
 
-  // Very short number
   if (digits.length < 7) {
     score += 20;
+    hasData = true;
   }
 
   // Hash-based pseudo-random addition for consistency
   const hash = digits.split("").reduce((a, b) => a + parseInt(b), 0);
   score += (hash % 10);
 
-  return { score: Math.min(100, Math.max(0, score)), reports };
+  return { score: Math.min(100, Math.max(0, score)), reports, hasData };
 }
 
 function selectCarrier(carriers: string[], digits: string): string {
@@ -175,8 +168,47 @@ function selectCarrier(carriers: string[], digits: string): string {
   return carriers[hash % carriers.length];
 }
 
-export function analyzePhoneIntelligence(phone: string): PhoneIntelligenceResult {
+/**
+ * AI Context Boost: adds risk points based on the accompanying job message content
+ */
+export function getAIContextBoost(message: string): { boost: number; reasons: string[] } {
+  let boost = 0;
+  const reasons: string[] = [];
+
+  if (/earn\s*(money|cash|income)\s*fast/i.test(message)) {
+    boost += 20;
+    reasons.push("Message contains 'earn money fast' pattern");
+  }
+  if (/registration\s*fee/i.test(message)) {
+    boost += 25;
+    reasons.push("Message requests registration fee");
+  }
+  if (/no\s*(interview|experience)\s*required/i.test(message)) {
+    boost += 15;
+    reasons.push("Message claims no interview required");
+  }
+  if (/whatsapp.*apply/i.test(message)) {
+    boost += 15;
+    reasons.push("Recruitment via WhatsApp detected");
+  }
+  if (/pay\s*(upfront|advance|first)/i.test(message)) {
+    boost += 25;
+    reasons.push("Advance payment requested in message");
+  }
+  if (/guaranteed\s*(income|job|placement)/i.test(message)) {
+    boost += 15;
+    reasons.push("Guaranteed placement claim in message");
+  }
+
+  return { boost, reasons };
+}
+
+export function analyzePhoneIntelligence(phone: string, messageContext?: string): PhoneIntelligenceResult {
   const digits = phone.replace(/\D/g, "");
+  const transparencyNotes: string[] = [
+    "Analysis based on heuristic pattern matching — not real-time API verification",
+    "Safety is NEVER guaranteed — always verify through official channels",
+  ];
 
   // Basic validation
   if (digits.length < 7 || digits.length > 15) {
@@ -196,13 +228,25 @@ export function analyzePhoneIntelligence(phone: string): PhoneIntelligenceResult
       spamReports: 0,
       findings: ["Invalid phone number length — cannot verify"],
       recommendation: "This number appears invalid. Do not contact or share personal details.",
+      transparencyNotes,
     };
   }
 
   const { countryCode, country, carriers, nationalNumber } = extractCountryInfo(digits);
   const lineType = detectLineType(digits);
   const carrier = selectCarrier(carriers, digits);
-  const { score: spamScore, reports: spamReports } = calculateSpamScore(digits, lineType);
+  const { score: baseSpamScore, reports: spamReports, hasData } = calculateSpamScore(digits, lineType);
+
+  // AI Context Boost from message
+  let aiBoost = 0;
+  const aiReasons: string[] = [];
+  if (messageContext) {
+    const contextResult = getAIContextBoost(messageContext);
+    aiBoost = contextResult.boost;
+    aiReasons.push(...contextResult.reasons);
+  }
+
+  const spamScore = Math.min(100, baseSpamScore + aiBoost);
 
   const isDisposable = DISPOSABLE_INDICATORS.some((p) => p.test(digits));
   const isFake = spamScore >= 60 || lineType === "premium" || (lineType === "voip" && spamScore >= 40);
@@ -219,7 +263,9 @@ export function analyzePhoneIntelligence(phone: string): PhoneIntelligenceResult
   } else if (lineType === "landline") {
     findings.push("Landline number — less common for recruitment contacts");
   } else if (lineType === "mobile") {
-    findings.push("Mobile number verified");
+    findings.push("Mobile number detected — type alone does not confirm legitimacy");
+  } else {
+    findings.push("Line type could not be determined");
   }
 
   // Carrier findings
@@ -242,35 +288,55 @@ export function analyzePhoneIntelligence(phone: string): PhoneIntelligenceResult
   } else if (spamScore >= 30) {
     findings.push(`Moderate spam risk (${spamScore}%) — ${spamReports} community reports`);
   } else if (spamReports > 0) {
-    findings.push(`Low spam risk — ${spamReports} community reports`);
+    findings.push(`Low spam indicators — ${spamReports} community reports`);
+  } else {
+    findings.push("No spam reports found — safety not guaranteed");
   }
 
-  // Disposable check
+  // AI context boost findings
+  if (aiReasons.length > 0) {
+    findings.push(`AI context boost applied (+${aiBoost} risk points):`);
+    aiReasons.forEach(r => findings.push(`  → ${r}`));
+  }
+
   if (isDisposable) {
     findings.push("Number matches disposable/temporary number patterns");
   }
 
-  // Determine overall status
-  let status: "genuine" | "spam" | "suspicious" | "fake";
-  let riskLevel: "safe" | "warning" | "danger";
+  // CRITICAL: Never default to safe. If no strong data, mark as unknown_risk
+  let status: "genuine" | "spam" | "suspicious" | "fake" | "unknown_risk";
+  let riskLevel: "safe" | "warning" | "danger" | "unknown";
   let reputationScore: number;
 
   if (isFake) {
     status = "fake";
     riskLevel = "danger";
     reputationScore = Math.max(0, 20 - spamScore / 5);
-  } else if (spamScore >= 50 || lineType === "voip") {
+  } else if (spamScore >= 80) {
     status = "spam";
     riskLevel = "danger";
-    reputationScore = Math.max(0, 40 - spamScore / 3);
+    reputationScore = Math.max(0, 30 - spamScore / 3);
+  } else if (spamScore >= 50 || lineType === "voip") {
+    status = "suspicious";
+    riskLevel = "warning";
+    reputationScore = Math.max(20, 60 - spamScore);
+  } else if (!hasData && spamScore < 30) {
+    // NO DATA = Unknown Risk, not safe
+    status = "unknown_risk";
+    riskLevel = "unknown";
+    reputationScore = 50; // neutral, not high
+    findings.push("Insufficient data to determine safety — treat as unknown risk");
+    transparencyNotes.push("No spam database records found for this number");
   } else if (spamScore >= 25 || isDisposable || lineType === "toll_free") {
     status = "suspicious";
     riskLevel = "warning";
     reputationScore = Math.max(20, 70 - spamScore);
   } else {
+    // Even with low score, never fully "safe" — use cautious genuine
     status = "genuine";
     riskLevel = "safe";
-    reputationScore = Math.max(60, 100 - spamScore);
+    reputationScore = Math.max(60, 95 - spamScore); // capped at 95, never 100
+    findings.push("Number appears legitimate but always verify independently");
   }
 
   // Format number
@@ -290,8 +356,10 @@ export function analyzePhoneIntelligence(phone: string): PhoneIntelligenceResult
     recommendation = "This number has been flagged as spam. Avoid sharing personal information and verify the caller through official channels.";
   } else if (status === "suspicious") {
     recommendation = "Exercise caution with this number. Verify the identity of the caller through official company channels before proceeding.";
+  } else if (status === "unknown_risk") {
+    recommendation = "No verified data available for this number. Do NOT assume it is safe. Verify independently through the company's official website or HR department.";
   } else {
-    recommendation = "This number appears legitimate, but always verify recruiter identity through the company's official website or HR department.";
+    recommendation = "This number shows no immediate red flags, but always verify recruiter identity through the company's official website or HR department. Safety is never guaranteed.";
   }
 
   return {
@@ -310,5 +378,6 @@ export function analyzePhoneIntelligence(phone: string): PhoneIntelligenceResult
     spamReports,
     findings,
     recommendation,
+    transparencyNotes,
   };
 }

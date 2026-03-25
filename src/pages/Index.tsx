@@ -4,21 +4,24 @@ import { Shield, Zap, Eye } from "lucide-react";
 import InputPanel from "@/components/InputPanel";
 import ResultsPanel from "@/components/ResultsPanel";
 import SafetyTips from "@/components/SafetyTips";
+import SearchHistory, { saveToHistory } from "@/components/SearchHistory";
 import { performAnalysis, type AnalysisInput, type AnalysisResult } from "@/lib/analysisEngine";
 
 const Index = () => {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [currentInput, setCurrentInput] = useState<AnalysisInput | null>(null);
 
   const handleAnalyze = useCallback((input: AnalysisInput) => {
     setIsAnalyzing(true);
     setResult(null);
+    setCurrentInput(input);
 
-    // Simulate network delay for UX
     setTimeout(() => {
       const analysisResult = performAnalysis(input);
       setResult(analysisResult);
       setIsAnalyzing(false);
+      saveToHistory(input, analysisResult);
     }, 2000);
   }, []);
 
@@ -79,7 +82,7 @@ const Index = () => {
             transition={{ delay: 0.1 }}
             className="lg:col-span-2 card-glow rounded-2xl p-5"
           >
-            <InputPanel onAnalyze={handleAnalyze} isAnalyzing={isAnalyzing} />
+            <InputPanel onAnalyze={handleAnalyze} isAnalyzing={isAnalyzing} initialInput={currentInput} />
           </motion.div>
 
           {/* Results Panel */}
@@ -92,6 +95,9 @@ const Index = () => {
             <ResultsPanel result={result} isAnalyzing={isAnalyzing} />
           </motion.div>
         </div>
+
+        {/* Search History */}
+        <SearchHistory onRecheck={handleAnalyze} />
 
         {/* Safety Tips */}
         <SafetyTips />
