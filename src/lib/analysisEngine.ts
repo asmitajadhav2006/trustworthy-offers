@@ -220,7 +220,7 @@ function analyzeCompany(company: string): { score: number; findings: string[] } 
 }
 
 export function performAnalysis(input: AnalysisInput): AnalysisResult {
-  const { analyzePhoneIntelligence } = require("./phoneIntelligence") as typeof import("./phoneIntelligence");
+  
   
   const messageResult = analyzeMessage(input.message);
   const urlResult = analyzeUrl(input.url);
