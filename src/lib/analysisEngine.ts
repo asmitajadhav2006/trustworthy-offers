@@ -1,3 +1,5 @@
+import { analyzePhoneIntelligence } from "./phoneIntelligence";
+
 export interface AnalysisInput {
   message: string;
   url: string;
