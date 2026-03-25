@@ -20,6 +20,7 @@ export interface AnalysisResult {
   risks: RiskDetail[];
   highlightedPhrases: { text: string; reason: string }[];
   recommendations: string[];
+  phoneIntelligence?: import("./phoneIntelligence").PhoneIntelligenceResult;
 }
 
 const SCAM_PHRASES: { pattern: RegExp; reason: string; weight: number }[] = [
