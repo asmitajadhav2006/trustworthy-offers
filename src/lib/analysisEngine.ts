@@ -293,5 +293,6 @@ export function performAnalysis(input: AnalysisInput): AnalysisResult {
     risks,
     highlightedPhrases: messageResult.highlights,
     recommendations,
+    phoneIntelligence: phoneIntel,
   };
 }

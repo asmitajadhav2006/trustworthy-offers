@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { AlertTriangle, CheckCircle2, Lightbulb, XCircle } from "lucide-react";
 import TrustGauge from "./TrustGauge";
 import RiskCard from "./RiskCard";
+import PhoneAnalysisCard from "./PhoneAnalysisCard";
 import type { AnalysisResult } from "@/lib/analysisEngine";
 
 interface ResultsPanelProps {
