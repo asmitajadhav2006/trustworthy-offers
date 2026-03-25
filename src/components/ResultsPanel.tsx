@@ -135,6 +135,11 @@ const ResultsPanel = ({ result, isAnalyzing }: ResultsPanelProps) => {
         </div>
       </div>
 
+      {/* Phone Intelligence */}
+      {result.phoneIntelligence && (
+        <PhoneAnalysisCard result={result.phoneIntelligence} />
+      )}
+
       {/* Recommendations */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
