@@ -1,6 +1,8 @@
 import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Shield, Zap, Eye } from "lucide-react";
+import { Shield, Zap, Eye, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 import InputPanel from "@/components/InputPanel";
 import ResultsPanel from "@/components/ResultsPanel";
 import SafetyTips from "@/components/SafetyTips";
