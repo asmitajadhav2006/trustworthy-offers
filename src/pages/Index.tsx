@@ -54,6 +54,11 @@ const Index = () => {
             <span className="flex items-center gap-1.5">
               <Eye className="w-3.5 h-3.5 text-primary" /> Multi-Source Analysis
             </span>
+            {user && (
+              <Button variant="ghost" size="sm" onClick={signOut} className="ml-2 text-muted-foreground hover:text-foreground">
+                <LogOut className="w-3.5 h-3.5 mr-1" /> Sign Out
+              </Button>
+            )}
           </div>
         </div>
       </header>
