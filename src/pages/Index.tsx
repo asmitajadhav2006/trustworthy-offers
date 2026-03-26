@@ -1,6 +1,8 @@
 import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Shield, Zap, Eye } from "lucide-react";
+import { Shield, Zap, Eye, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 import InputPanel from "@/components/InputPanel";
 import ResultsPanel from "@/components/ResultsPanel";
 import SafetyTips from "@/components/SafetyTips";
@@ -11,6 +13,7 @@ const Index = () => {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [currentInput, setCurrentInput] = useState<AnalysisInput | null>(null);
+  const { user, signOut } = useAuth();
 
   const handleAnalyze = useCallback((input: AnalysisInput) => {
     setIsAnalyzing(true);
@@ -51,6 +54,11 @@ const Index = () => {
             <span className="flex items-center gap-1.5">
               <Eye className="w-3.5 h-3.5 text-primary" /> Multi-Source Analysis
             </span>
+            {user && (
+              <Button variant="ghost" size="sm" onClick={signOut} className="ml-2 text-muted-foreground hover:text-foreground">
+                <LogOut className="w-3.5 h-3.5 mr-1" /> Sign Out
+              </Button>
+            )}
           </div>
         </div>
       </header>
