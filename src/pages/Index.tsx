@@ -13,6 +13,7 @@ const Index = () => {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [currentInput, setCurrentInput] = useState<AnalysisInput | null>(null);
+  const { user, signOut } = useAuth();
 
   const handleAnalyze = useCallback((input: AnalysisInput) => {
     setIsAnalyzing(true);
